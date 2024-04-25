@@ -88,7 +88,8 @@ class ZarrIO(HDMFIO):
              'doc': 'the path to the Zarr file or a supported Zarr store'},
             {'name': 'manager', 'type': BuildManager, 'doc': 'the BuildManager to use for I/O', 'default': None},
             {'name': 'mode', 'type': str,
-             'doc': 'the mode to open the Zarr file with, one of ("w", "r", "r+", "a", "w-")'},
+             'doc': 'the mode to open the Zarr file with, one of ("w", "r", "r+", "a", "w-") '
+                    'the mode r- is used to force open without consolidated metadata in read only mode.'},
             {'name': 'synchronizer', 'type': (zarr.ProcessSynchronizer, zarr.ThreadSynchronizer, bool),
              'doc': 'Zarr synchronizer to use for parallel I/O. If set to True a ProcessSynchronizer is used.',
              'default': None},
@@ -160,8 +161,11 @@ class ZarrIO(HDMFIO):
             # Within zarr, open_consolidated only allows the mode to be 'r' or 'r+'.
             # As a result, when in other modes, the file will not use consolidated metadata.
             if self.__mode not in ['r', 'r+']:
+                # r- is only an internal mode in ZarrIO to force the use of regular open. For Zarr we need to
+                # use the regular mode r when r- is specified
+                mode_to_use = self.__mode if self.__mode != 'r-' else 'r'
                 self.__file = zarr.open(store=self.path,
-                                        mode=self.__mode,
+                                        mode=mode_to_use,
                                         synchronizer=self.__synchronizer,
                                         storage_options=self.__storage_options)
             else:
@@ -478,6 +482,9 @@ class ZarrIO(HDMFIO):
         This method will check to see if the metadata has been consolidated.
         If so, use open_consolidated.
         """
+        # This check is just a safeguard for possible errors in the future. But this should never happen
+        if mode == 'r-':
+            raise ValueError('Mode r- not allowed for reading with consolidated metadata')
         # self.path can be both a string or a one of the `SUPPORTED_ZARR_STORES`.
         if isinstance(self.path, str):
             path = self.path
@@ -490,10 +497,10 @@ class ZarrIO(HDMFIO):
                                           synchronizer=synchronizer,
                                           storage_options=storage_options)
         else:
-            return zarr.open(store=self.path,
-                             mode=self.__mode,
-                             synchronizer=self.__synchronizer,
-                             storage_options=self.__storage_options)
+            return zarr.open(store=store,
+                             mode=mode,
+                             synchronizer=synchronizer,
+                             storage_options=storage_options)
 
     @docval({'name': 'parent', 'type': Group, 'doc': 'the parent Zarr object'},
             {'name': 'builder', 'type': GroupBuilder, 'doc': 'the GroupBuilder to write'},
@@ -723,7 +730,9 @@ class ZarrIO(HDMFIO):
         else:
             target_name = ROOT_NAME
 
-        target_zarr_obj = self.__open_file_consolidated(source_file, mode='r', storage_options=self.__storage_options)
+        target_zarr_obj = self.__open_file_consolidated(store=source_file,
+                                                        mode='r',
+                                                        storage_options=self.__storage_options)
         if object_path is not None:
             try:
                 target_zarr_obj = target_zarr_obj[object_path]
