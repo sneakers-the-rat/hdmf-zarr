@@ -181,4 +181,3 @@ class TestConsolidateMetadata(ZarrStoreTestCase):
                 read_io._ZarrIO__open_file_consolidated(store=self.store, mode='r')
             except ValueError as e:
                 self.fail("ZarrIO.__open_file_consolidated raised an unexpected ValueError: {}".format(e))
-
