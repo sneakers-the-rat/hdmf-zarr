@@ -77,6 +77,14 @@ _deprecation_warning_datetime = (
     r"datetime.datetime.utcfromtimestamp() *"
 )
 
+_deprecation_warning_zarr_store = (
+    r"The NestedDirectoryStore is deprecated *"
+)
+_deprecation_warning_numpy = (
+    "__array__ implementation doesn't accept a copy keyword, so passing copy=False failed. "
+    "__array__ must implement 'dtype' and 'copy' keyword arguments."
+)
+
 def run_gallery_tests():
     global TOTAL, FAILURES, ERRORS
     logging.info("Testing execution of Sphinx Gallery files")
@@ -141,6 +149,12 @@ def run_gallery_tests():
                 warnings.filterwarnings(
                     # this is triggered from datetime
                     "ignore", message=_deprecation_warning_datetime, category=DeprecationWarning
+                )
+                warnings.filterwarnings(
+                    "ignore", message=_deprecation_warning_zarr_store, category=FutureWarning
+                )
+                warnings.filterwarnings(
+                    "ignore", message=_deprecation_warning_numpy, category=DeprecationWarning
                 )
                 _import_from_file(script_abs)
         except Exception:

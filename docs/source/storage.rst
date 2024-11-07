@@ -55,7 +55,6 @@ Groups
     datasets                      Zarr datasets within the Zarr group
     attributes                    Zarr attributes on the Zarr group
     links                         Stored as JSON formatted attributes on the Zarr Group
-    linkable                      Not mapped; Stored in schema only
     quantity                      Not mapped; Number of appearances of the group
     neurodata_type                Attribute ``neurodata_type`` on the Zarr Group
     namespace ID                  Attribute ``namespace`` on the Zarr Group
@@ -89,7 +88,6 @@ Datasets
     shape                         Shape of the Zarr dataset if the shape is fixed, otherwise shape defines the maxshape
     dims                          Not mapped
     attributes                    Zarr attributes on the Zarr dataset
-    linkable                      Not mapped; Stored in schema only
     quantity                      Not mapped; Number of appearances of the dataset
     neurodata_type                Attribute ``neurodata_type`` on the Zarr dataset
     namespace ID                  Attribute ``namespace`` on the Zarr dataset
@@ -219,7 +217,7 @@ For example:
 
     In :py:class:`~hdmf_zarr.backend.ZarrIO`, links are written by the
     :py:meth:`~hdmf_zarr.backend.ZarrIO.__write_link__` function, which also uses the helper functions
-    i) :py:meth:`~hdmf_zarr.backend.ZarrIO.__get_ref` to construct py:meth:`~hdmf_zarr.utils.ZarrRefernce`
+    i) :py:meth:`~hdmf_zarr.backend.ZarrIO._create_ref` to construct py:meth:`~hdmf_zarr.utils.ZarrRefernce`
     and ii) :py:meth:`~hdmf_zarr.backend.ZarrIO.__add_link__` to add a link to the Zarr file.
     :py:meth:`~hdmf_zarr.backend.ZarrIO.__read_links` then parses links and also uses the
     :py:meth:`~hdmf_zarr.backend.ZarrIO.__resolve_ref` helper function to resolve the paths stored in links.
@@ -247,7 +245,7 @@ by their location (i.e., index) in the dataset. As such, object references only 
 the relative path to the target Zarr file, and the ``path`` identifying the object within the source
 Zarr file. The individual object references are defined in the
 :py:class:`~hdmf_zarr.backend.ZarrIO` as py:class:`~hdmf_zarr.utils.ZarrReference` object created via
-the :py:meth:`~hdmf_zarr.backend.ZarrIO.__get_ref` helper function.
+the :py:meth:`~hdmf_zarr.backend.ZarrIO._create_ref` helper function.
 
 By default, :py:class:`~hdmf_zarr.backend.ZarrIO` uses the ``numcodecs.pickles.Pickle`` codec to
 encode object references defined as py:class:`~hdmf_zarr.utils.ZarrReference` dicts in datasets.
@@ -299,7 +297,7 @@ store the definition of the ``region`` that is being referenced, e.g., a slice o
     To implement region references will require updating:
     1)  py:class:`~hdmf_zarr.utils.ZarrReference` to add a ``region`` key to support storing
     the selection for the region,
-    2) :py:meth:`~hdmf_zarr.backend.ZarrIO.__get_ref` to support passing in the region definition to
+    2) :py:meth:`~hdmf_zarr.backend.ZarrIO._create_ref` to support passing in the region definition to
     be added to the py:class:`~hdmf_zarr.utils.ZarrReference`,
     3) :py:meth:`~hdmf_zarr.backend.ZarrIO.write_dataset` already partially implements the required
     logic for creating region references by checking for :py:class:`hdmf.build.RegionBuilder` inputs
@@ -404,7 +402,6 @@ operations when retrieving certain metadata in read mode.
 
 .. note::
 
-    When updating a file, the consolidated metadata will also need to be updated via 
-    `zarr.consolidate_metadata(path)` to ensure the consolidated metadata is consistent 
+    When updating a file, the consolidated metadata will also need to be updated via
+    `zarr.consolidate_metadata(path)` to ensure the consolidated metadata is consistent
     with the file.
-
